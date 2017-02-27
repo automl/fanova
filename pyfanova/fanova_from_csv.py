@@ -7,7 +7,7 @@ from pyfanova.fanova import Fanova
 
 class FanovaFromCSV(Fanova):
 
-    def __init__(self, csv_file, header=False,**kwargs):
+    def __init__(self, csv_file, header=False,categories=None,**kwargs):
 
         self._scenario_dir = "tmp_smac_files"
 
@@ -15,6 +15,7 @@ class FanovaFromCSV(Fanova):
             os.mkdir(self._scenario_dir)
 
         self.header=header
+        self.categories=categories
 
         X, y = self._read_csv_file(csv_file,header=header)
         self._write_instances_file()
@@ -71,8 +72,11 @@ class FanovaFromCSV(Fanova):
 
         fh = open(os.path.join(self._scenario_dir, "param-file.txt"), "w")
         for i in range(0, self._num_of_params):
-            if self.header:
-                param_string = self.parameter_names[i] + " " + str(self._bounds[i]) + " " + "[" + str(self._defaults[i]) + "]\n"
+            par = self.parameter_names[i]
+            if self.categories is not None:
+                param_string = par + " " + self.categories[par]+ "\n"
+            elif self.header:
+                param_string = par + " " + str(self._bounds[i]) + " " + "[" + str(self._defaults[i]) + "]\n"
             else:
                 param_string = "X" + str(i) + " " + str(self._bounds[i]) + " " + "[" + str(self._defaults[i]) + "]\n"
             logging.debug(param_string)
@@ -125,7 +129,8 @@ class FanovaFromCSV(Fanova):
 
         logging.debug("number of parameters: " + str(self._num_of_params))
 
-        X = np.zeros([number_of_points, self._num_of_params])
+        X = np.zeros([number_of_points, self._num_of_params],dtype=np.object)
+            
         y = np.zeros([number_of_points])
 
         if header:
@@ -150,11 +155,15 @@ class FanovaFromCSV(Fanova):
 
         fh.close()
 
-        self._bounds = []
-        self._defaults = []
-        for i in range(0, self._num_of_params):
-            #Take min and max value as bounds for smac parameter file
-            self._bounds.append([np.min(X[:, i]), np.max(X[:, i])])
-            #Set min value as default value for smac parameter file
-            self._defaults.append(np.min(X[:, i]))
+        if self.categories is None:
+            self._bounds = []
+            self._defaults = []
+            for i in range(0, self._num_of_params):
+                #Take min and max value as bounds for smac parameter file
+                self._bounds.append([np.min(X[:, i]), np.max(X[:, i])])
+                #Set min value as default value for smac parameter file
+                self._defaults.append(np.min(X[:, i]))
+        else:
+            X=np.array(X)
+
         return X, y
