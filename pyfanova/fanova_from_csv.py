@@ -5,17 +5,18 @@ import shutil
 import numpy as np
 from pyfanova.fanova import Fanova
 
-
 class FanovaFromCSV(Fanova):
 
-    def __init__(self, csv_file, **kwargs):
+    def __init__(self, csv_file, header=False,**kwargs):
 
         self._scenario_dir = "tmp_smac_files"
 
         if not os.path.isdir(self._scenario_dir):
             os.mkdir(self._scenario_dir)
 
-        X, y = self._read_csv_file(csv_file)
+        self.header=header
+
+        X, y = self._read_csv_file(csv_file,header=header)
         self._write_instances_file()
         self._write_runs_and_results_file(y)
         self._write_param_file()
@@ -70,7 +71,10 @@ class FanovaFromCSV(Fanova):
 
         fh = open(os.path.join(self._scenario_dir, "param-file.txt"), "w")
         for i in range(0, self._num_of_params):
-            param_string = "X" + str(i) + " " + str(self._bounds[i]) + " " + "[" + str(self._defaults[i]) + "]\n"
+            if self.header:
+                param_string = self.parameter_names[i] + " " + str(self._bounds[i]) + " " + "[" + str(self._defaults[i]) + "]\n"
+            else:
+                param_string = "X" + str(i) + " " + str(self._bounds[i]) + " " + "[" + str(self._defaults[i]) + "]\n"
             logging.debug(param_string)
             fh.write(param_string)
 
@@ -82,7 +86,10 @@ class FanovaFromCSV(Fanova):
         for i in range(0, params.shape[0]):
             line = str(i) + ": "
             for j in range(0, params.shape[1]):
-                line = line + "X" + str(j) + "='" + str(params[i][j]) + "', "
+                if self.header:
+                    line = line + self.parameter_names[j] + "='" + str(params[i][j]) + "', "
+                else:
+                    line = line + "X" + str(j) + "='" + str(params[i][j]) + "', "
             #remove the last comma and whitespace from the string again
             line = line[:-2]
             line = line + '\n'
@@ -90,17 +97,27 @@ class FanovaFromCSV(Fanova):
             fh.write(line)
         fh.close()
 
-    def _read_csv_file(self, filename):
+    def _read_csv_file(self, filename,header=False):
 
         fh = open(filename, "r")
-        reader = csv.reader(fh)
-
+        if header:
+            reader = csv.DictReader(fh)
+            self.parameter_names=reader.fieldnames
+        else:
+            reader = csv.reader(fh)
+            self.parameter_names=None            
+        
         #Count how many data points are in the csv file
         number_of_points = 0
-        for line in reader:
+        for line in reader: 
             number_of_points += 1
 
-        fh.seek(0)
+        if header:
+            fh.seek(0)
+            reader = csv.DictReader(fh)
+        else:
+            fh.seek(0)
+
         #Count the dimension of the the data points
         line = fh.readline()
         s = line.split(',')
@@ -111,12 +128,24 @@ class FanovaFromCSV(Fanova):
         X = np.zeros([number_of_points, self._num_of_params])
         y = np.zeros([number_of_points])
 
-        fh.seek(0)
+        if header:
+            fh.seek(0)
+            reader = csv.DictReader(fh)
+        else:
+            fh.seek(0)
+
         rownum = 0
         for line in reader:
             for param in range(0, self._num_of_params):
-                X[rownum][param] = line[param]
-            y[rownum] = line[-1]
+                if header:
+                    X[rownum][param] = line[self.parameter_names[param]]
+                else:
+                    X[rownum][param] = line[param]
+            if header:
+                y[rownum] = line[self.parameter_names[-1]]
+            else:
+                y[rownum] = line[-1] 
+
             rownum += 1
 
         fh.close()
