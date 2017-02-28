@@ -4,6 +4,7 @@ import os
 import shutil
 import numpy as np
 from pyfanova.fanova import Fanova
+import ipdb
 
 class FanovaFromCSV(Fanova):
 
@@ -130,7 +131,10 @@ class FanovaFromCSV(Fanova):
 
         logging.debug("number of parameters: " + str(self._num_of_params))
 
-        X = np.zeros([number_of_points, self._num_of_params],dtype=np.object)
+        if self.categories is None:
+            X = np.zeros([number_of_points, self._num_of_params])
+        else:
+            X = np.zeros([number_of_points, self._num_of_params],dtype=np.object)
             
         y = np.zeros([number_of_points])
 
@@ -143,6 +147,7 @@ class FanovaFromCSV(Fanova):
         rownum = 0
         for line in reader:
             for param in range(0, self._num_of_params):
+
                 if header:
                     X[rownum][param] = line[self.parameter_names[param]]
                 else:
