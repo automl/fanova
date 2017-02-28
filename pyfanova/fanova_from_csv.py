@@ -72,10 +72,11 @@ class FanovaFromCSV(Fanova):
 
         fh = open(os.path.join(self._scenario_dir, "param-file.txt"), "w")
         for i in range(0, self._num_of_params):
-            par = self.parameter_names[i]
             if self.categories is not None:
+                par = self.parameter_names[i]
                 param_string = par + " " + self.categories[par]+ "\n"
             elif self.header:
+                par = self.parameter_names[i]
                 param_string = par + " " + str(self._bounds[i]) + " " + "[" + str(self._defaults[i]) + "]\n"
             else:
                 param_string = "X" + str(i) + " " + str(self._bounds[i]) + " " + "[" + str(self._defaults[i]) + "]\n"
