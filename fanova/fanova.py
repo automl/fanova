@@ -5,7 +5,7 @@ import logging
 import pyrfr.regression as reg
 import pyrfr.util
 import ConfigSpace
-from ConfigSpace.hyperparameters import CategoricalHyperparameter, UniformFloatHyperparameter
+from ConfigSpace.hyperparameters import CategoricalHyperparameter, UniformFloatHyperparameter, Constant
 
 
 class fANOVA(object):
@@ -75,7 +75,8 @@ class fANOVA(object):
         if X.shape[1] != len(self.cs_params):
             raise RuntimeError('Number of parameters in ConfigSpace object does not match input X')
         for i in range(len(self.cs_params)):
-            if not isinstance(self.cs_params[i], (CategoricalHyperparameter)):
+            if not isinstance(self.cs_params[i], (CategoricalHyperparameter)) and not isinstance(
+                    self.cs_params[i], (Constant)):
                 if (np.max(X[:, i]) > self.cs_params[i].upper) or \
                         (np.min(X[:, i]) < self.cs_params[i].lower):
                     raise RuntimeError('Some sample values from X are not in the given interval')
