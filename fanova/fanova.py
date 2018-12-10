@@ -75,15 +75,17 @@ class fANOVA(object):
         if X.shape[1] != len(self.cs_params):
             raise RuntimeError('Number of parameters in ConfigSpace object does not match input X')
         for i in range(len(self.cs_params)):
-            if not isinstance(self.cs_params[i], (CategoricalHyperparameter)) and not isinstance(
-                    self.cs_params[i], (Constant)):
-                if (np.max(X[:, i]) > self.cs_params[i].upper) or \
-                        (np.min(X[:, i]) < self.cs_params[i].lower):
-                    raise RuntimeError('Some sample values from X are not in the given interval')
-            else:
+            if isinstance(self.cs_params[i], (CategoricalHyperparameter)):
                 unique_vals = set(X[:, i])
                 if len(unique_vals) > len(self.cs_params[i].choices):
                     raise RuntimeError('There are some categoricals missing in the ConfigSpace specification')
+            elif isinstance(self.cs_params[i], (Constant)):
+                if any([v for v in X[:, i] if v != self.cs_params[i].value]):
+                    raise RuntimeError('There are illegal values for the Constant %s' % (self.cs_params[i]))
+            else:
+                if (np.max(X[:, i]) > self.cs_params[i].upper) or \
+                        (np.min(X[:, i]) < self.cs_params[i].lower):
+                    raise RuntimeError('Some sample values from X are not in the given interval')
 
         # initialize all types as 0
         types = np.zeros(len(self.cs_params), dtype=np.uint)
