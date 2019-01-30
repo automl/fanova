@@ -157,11 +157,12 @@ class Visualizer(object):
             param_names.append(self.cs_params[p].name)
             param_indices.append(p)
 
-        if isinstance(self.cs_params[param_indices[0]], (CategoricalHyperparameter)) or isinstance(self.cs_params[param_indices[1]], (CategoricalHyperparameter)):
+        first_is_cat = isinstance(self.cs_params[param_indices[0]], CategoricalHyperparameter)
+        second_is_cat = isinstance(self.cs_params[param_indices[1]], CategoricalHyperparameter)
+        if first_is_cat or second_is_cat:
             # One of the two parameters is categorical
             choices, zz = self.generate_pairwise_marginal(param_indices, resolution)
-            if (isinstance(self.cs_params[param_indices[0]], (CategoricalHyperparameter)) and
-                isinstance(self.cs_params[param_indices[1]], (CategoricalHyperparameter))):
+            if first_is_cat and second_is_cat:
                 # Both parameters are categorical
                 fig = plt.figure()
                 plt.title('%s and %s' %(param_names[0], param_names[1]))
@@ -175,9 +176,10 @@ class Visualizer(object):
                 if show:
                     plt.show()
             else:
-                cat_choices = self.cs_params[param_indices[0]].choices if isinstance(self.cs_params[param_indices[0]], (CategoricalHyperparameter)) else self.cs_params[param_indices[1]].choices
-                cats = choices[0] if (choices[0][0] in cat_choices and choices[0][-1] in cat_choices) else choices[1]
-                x_label = param_names[0] if isinstance(self.cs_params[param_list[1]],(CategoricalHyperparameter)) else param_names[1]
+                # Only one of them is categorical
+                cat_choices = self.cs_params[param_indices[0]].choices if first_is_cat else self.cs_params[param_indices[1]].choices
+                cats = choices[0] if all(c in cat_choices for c in choices[0]) else choices[1]
+                x_label = param_names[0] if second_is_cat else param_names[1]
 
                 fig = plt.figure()
                 for i, cat in enumerate(cats):
