@@ -178,7 +178,6 @@ class Visualizer(object):
             else:
                 # Only one of them is categorical
                 cat_choices = self.cs_params[param_indices[0]].choices if first_is_cat else self.cs_params[param_indices[1]].choices
-                cats = choices[0] if all(c in cat_choices for c in choices[0]) else choices[1]
                 x_label = param_names[0] if second_is_cat else param_names[1]
 
                 fig = plt.figure()
