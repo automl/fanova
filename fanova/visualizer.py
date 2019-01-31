@@ -181,7 +181,7 @@ class Visualizer(object):
                 x_label = param_names[0] if second_is_cat else param_names[1]
 
                 fig = plt.figure()
-                for i, cat in enumerate(cats):
+                for i, cat in enumerate(cat_choices):
                     plt.plot(zz[i], label='%s' % str(cat))
                 plt.title('%s and %s' %(param_names[0], param_names[1]))
                 plt.ylabel(self._y_label)
