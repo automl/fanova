@@ -100,7 +100,7 @@ class Visualizer(object):
                 param_names.append(self.cs_params[p].name)
 
             choice_arr = [[choice_arr[1], choice_arr[0]] if len(choice_arr[1]) > len(choice_arr[0]) else [choice_arr[0], choice_arr[1]]]
-            choice_vals = [[choice_vals[1], choice_vals[0]] if len(choice_vals[1]) < len(choice_vals[0]) else [choice_vals[0],choice_vals[1]]]
+            choice_vals = [[choice_vals[1], choice_vals[0]] if len(choice_vals[1]) < len(choice_vals[0]) else [choice_vals[0], choice_vals[1]]]
             choice_arr = np.asarray(choice_arr).squeeze()
             choice_vals = np.asarray(choice_vals).squeeze()
             param_indices = [[param_indices[1], param_indices[0]] if len(choice_vals[1]) < len(choice_vals[0]) else [param_indices[0], param_indices[1]]]
@@ -108,7 +108,7 @@ class Visualizer(object):
             choice_vals = np.asarray(choice_vals).squeeze()
             param_indices = np.asarray(param_indices).squeeze()
             zz = np.zeros((len(choice_vals[0]), len(choice_vals[1])))
-            
+
             for i, x_value in enumerate(choice_vals[0]):
                 for j, y_value in enumerate(choice_vals[1]):
                     zz[i][j] = self.fanova.marginal_mean_variance_for_values(param_indices, [x_value, y_value])[0]
@@ -165,10 +165,10 @@ class Visualizer(object):
             if first_is_cat and second_is_cat:
                 # Both parameters are categorical
                 fig = plt.figure()
-                plt.title('%s and %s' %(param_names[0], param_names[1]))
+                plt.title('%s and %s' % (param_names[0], param_names[1]))
                 plt.imshow(zz, cmap='hot', interpolation='nearest')
-                plt.xticks(np.arange(0,len(choices[0])), choices[0], fontsize=8)
-                plt.yticks(np.arange(0,len(choices[1])), choices[1], fontsize=8)
+                plt.xticks(np.arange(0, len(choices[0])), choices[0], fontsize=8)
+                plt.yticks(np.arange(0, len(choices[1])), choices[1], fontsize=8)
                 plt.xlabel(param_names[0])
                 plt.ylabel(param_names[1])
                 plt.colorbar().set_label(self._y_label)
@@ -183,7 +183,7 @@ class Visualizer(object):
                 fig = plt.figure()
                 for i, cat in enumerate(cat_choices):
                     plt.plot(zz[i], label='%s' % str(cat))
-                plt.title('%s and %s' %(param_names[0], param_names[1]))
+                plt.title('%s and %s' % (param_names[0], param_names[1]))
                 plt.ylabel(self._y_label)
                 plt.xlabel(x_label)
                 plt.legend()
