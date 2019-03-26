@@ -282,7 +282,8 @@ class Visualizer(object):
                 std[i] = np.sqrt(v)
             return mean, std, grid
 
-    def plot_marginal(self, param, resolution=100, log_scale=None, show=True):
+    def plot_marginal(self, param, resolution=100, log_scale=None, show=True,
+                      incumbents=None):
         """
         Creates a plot of marginal of a selected parameter
 
@@ -301,6 +302,9 @@ class Visualizer(object):
 
         show: boolean
             whether to call plt.show() to show plot directly as interactive matplotlib-plot
+
+        incumbents: List[Configuration]
+            list of ConfigSpace.Configurations that are marked as incumbents
         """
         param_idx = param
         if type(param_idx) == str:
@@ -340,7 +344,7 @@ class Visualizer(object):
 
             # PREPROCESS
             if log_scale is None:
-                log_scale = self.cs_params[param_idx].log
+                log_scale = self.cs_params[param].log or (np.diff(grid).std() > 0.000001)
 
             mean, std, grid = self.generate_marginal(param_idx, resolution)
             mean = np.asarray(mean)
@@ -350,14 +354,30 @@ class Visualizer(object):
             upper_curve = mean + std
 
             # PLOT
-            if log_scale or (np.diff(grid).std() > 0.000001):
-                plt.semilogx(grid, mean, 'b')
+            if log_scale:
+                if (np.diff(grid).std() > 0.000001):
+                    self.logger.info("It might be better to plot this parameter"
+                                     " '%s' in log-scale.", param_name)
+                plt.semilogx(grid, mean, 'b', label='predicted %s' % self._y_label)
             else:
-                plt.plot(grid, mean, 'b')
-            plt.fill_between(grid, upper_curve, lower_curve, facecolor='red', alpha=0.6)
-            plt.xlabel(param_name)
+                plt.plot(grid, mean, 'b', label='predicted %s' % self._y_label)
+            plt.fill_between(grid, upper_curve, lower_curve, facecolor='red',
+                             alpha=0.6, label='std')
 
+            if incumbents is not None:
+                if not isinstance(incumbents, list):
+                    incumbents = [incumbents]
+                values = [inc[param_name] for inc in incumbents if param_name in inc and inc[param_name] is not None]
+                indices = [(np.abs(np.asarray(grid) - val)).argmin() for val in values]
+                if len(indices) > 0:
+                    plt.scatter(list([grid[idx] for idx in indices]),
+                                list([mean[idx] for idx in indices]),
+                                label='incumbent', c='black', marker='.', zorder=999)
+
+            plt.xlabel(param_name)
             plt.ylabel(self._y_label)
+            plt.grid(True)
+            plt.legend()
             plt.tight_layout()
 
         if show:
