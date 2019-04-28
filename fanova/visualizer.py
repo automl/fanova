@@ -232,7 +232,12 @@ class Visualizer(object):
             if not os.path.exists(interact_dir):
                 self.logger.info('creating %s' % interact_dir)
                 os.makedirs(interact_dir)
-            pickle.dump(fig, open(interact_dir + '/%s_%s.fig.pkl' % (param_names[0], param_names[1]), 'wb'))
+            try:
+                pickle.dump(fig, open(interact_dir + '/%s_%s.fig.pkl' % (param_names[0], param_names[1]), 'wb'))
+            except AttributeError as err:
+                self.logger.debug(err, exc_info=1)
+                self.logger.info("Pickling the interactive pairwise-marginal plot (%s) raised an exception. Resume "
+                                 "without pickling. ", str(param_names))
 
         return plt
 
