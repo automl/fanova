@@ -170,6 +170,7 @@ class Visualizer(object):
                 # Only one of them is categorical -> create multi-line-plot
                 # Make sure categorical is first in indices (for iteration below)
                 param_indices = param_indices if first_is_cat else param_indices[::-1]
+
                 params = params if first_is_cat else params[::-1]
                 choices, zz = self.generate_pairwise_marginal(param_indices, resolution)
 
