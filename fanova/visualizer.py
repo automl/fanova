@@ -170,10 +170,14 @@ class Visualizer(object):
                 # Only one of them is categorical -> create multi-line-plot
                 # Make sure categorical is first in indices (for iteration below)
                 param_indices = param_indices if first_is_cat else param_indices[::-1]
+                params = params if first_is_cat else params[::-1]
                 choices, zz = self.generate_pairwise_marginal(param_indices, resolution)
 
                 for i, cat in enumerate(choices[0]):
-                    plt.plot(choices[1], zz[i], label='%s' % str(cat))
+                    if params[1].log:
+                        plt.semilogx(choices[1], zz[i],label='%s' % str(cat))
+                    else:
+                        plt.plot(choices[1], zz[i], label='%s' % str(cat))
 
                 plt.ylabel(self._y_label)
                 plt.xlabel(param_names[0] if second_is_cat else param_names[1])  # x-axis displays non-categorical
