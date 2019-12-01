@@ -98,7 +98,13 @@ class Visualizer(object):
                 grid_orig.append(p.choices)
                 grid_fanova.append(np.arange(len(p.choices)))
             else:
-                grid = np.linspace(p.lower, p.upper, resolution)
+                if p.log:
+                    base = np.e  # assuming ConfigSpace uses the natural logarithm
+                    log_lower = np.log(p.lower) / np.log(base)
+                    log_upper = np.log(p.upper) / np.log(base)
+                    grid = np.logspace(log_lower, log_upper, resolution, endpoint=True, base=base)
+                else:
+                    grid = np.linspace(p.lower, p.upper, resolution)
                 grid_orig.append(grid)
                 grid_fanova.append(grid)
 
@@ -170,10 +176,14 @@ class Visualizer(object):
                 # Only one of them is categorical -> create multi-line-plot
                 # Make sure categorical is first in indices (for iteration below)
                 param_indices = param_indices if first_is_cat else param_indices[::-1]
+                params = params if first_is_cat else params[::-1]
                 choices, zz = self.generate_pairwise_marginal(param_indices, resolution)
 
                 for i, cat in enumerate(choices[0]):
-                    plt.plot(choices[1], zz[i], label='%s' % str(cat))
+                    if params[1].log:
+                        plt.semilogx(choices[1], zz[i],label='%s' % str(cat))
+                    else:
+                        plt.plot(choices[1], zz[i], label='%s' % str(cat))
 
                 plt.ylabel(self._y_label)
                 plt.xlabel(param_names[0] if second_is_cat else param_names[1])  # x-axis displays non-categorical
