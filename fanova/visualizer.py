@@ -235,20 +235,20 @@ class Visualizer(object):
 
         return plt
 
-    def generate_marginal(self, param, resolution=100):
+    def generate_marginal(self, p, resolution=100):
         """
         Creates marginals of a selected parameter for own plots
 
         Parameters
         ----------
-        param: int or str
+        p: int or str
             Index of chosen parameter in the ConfigSpace (starts with 0) or name
         resolution: int
             Number of samples to generate from the parameter range as
             values to predict
 
         """
-        p, p_name, p_idx = self._get_parameter(param)
+        p, p_name, p_idx = self._get_parameter(p)
 
         if isinstance(p, (CategoricalHyperparameter, Constant)):
             try:
@@ -265,8 +265,7 @@ class Visualizer(object):
             upper_bound = p.upper
             log = p.log
             if log:
-                # JvR: my conjecture is that ConfigSpace uses the natural logarithm
-                base = np.e
+                base = np.e  # assuming ConfigSpace uses the natural logarithm
                 log_lower = np.log(lower_bound) / np.log(base)
                 log_upper = np.log(upper_bound) / np.log(base)
                 grid = np.logspace(log_lower, log_upper, resolution, endpoint=True, base=base)
@@ -281,7 +280,7 @@ class Visualizer(object):
             mean = np.zeros(resolution)
             std = np.zeros(resolution)
 
-            dim = [param]
+            dim = [p_idx]
             for i in range(0, resolution):
                 (m, v) = self.fanova.marginal_mean_variance_for_values(dim, [grid[i]])
                 mean[i] = m
