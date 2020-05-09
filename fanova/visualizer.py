@@ -8,7 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
-from ConfigSpace.hyperparameters import Hyperparameter, CategoricalHyperparameter, Constant
+from ConfigSpace.hyperparameters import Hyperparameter, CategoricalHyperparameter, Constant, OrdinalHyperparameter, \
+    NumericalHyperparameter
 
 
 class Visualizer(object):
@@ -84,7 +85,7 @@ class Visualizer(object):
             array that contains the predicted importance (shape is len(categoricals) or resolution depending on
             parameter, so e.g. zz = np.array(3, 20) if first parameter has three categories and resolution is set to 20
         """
-        if not len(param_list) == 2:
+        if len(set(param_list)) != 2:
             raise ValueError("You have to specify 2 (different) parameters")
 
         params, param_names, param_indices = self._get_parameter(param_list)
@@ -97,10 +98,13 @@ class Visualizer(object):
             if isinstance(p, CategoricalHyperparameter):
                 grid_orig.append(p.choices)
                 grid_fanova.append(np.arange(len(p.choices)))
+            elif isinstance(p, OrdinalHyperparameter):
+                grid_orig.append(p.sequence)
+                grid_fanova.append(np.arange(len(p.sequence)))
             elif isinstance(p, Constant):
                 grid_orig.append((p.value,))
                 grid_fanova.append(np.arange(1))
-            else:
+            elif isinstance(p, NumericalHyperparameter):
                 if p.log:
                     base = np.e  # assuming ConfigSpace uses the natural logarithm
                     log_lower = np.log(p.lower) / np.log(base)
@@ -110,26 +114,20 @@ class Visualizer(object):
                     grid = np.linspace(p.lower, p.upper, resolution)
                 grid_orig.append(grid)
                 grid_fanova.append(grid)
+            else:
+                raise ValueError("Hyperparameter %s of type %s not supported." % (p.name, type(p)))
 
-        # Turn into arrays, squeeze all but the first two dimensions (to avoid squeezing away the dimension for Constants)
+        # Turn into arrays, squeeze all but the first two dimensions (avoid squeezing away the dimension for Constants)
         param_indices = np.array(param_indices)
         param_indices = param_indices.reshape([s for i, s in enumerate(param_indices.shape) if i in [0, 1] or s != 1])
         grid_fanova = np.array(grid_fanova)
         grid_fanova = grid_fanova.reshape([s for i, s in enumerate(grid_fanova.shape) if i in [0, 1] or s != 1])
 
-        # The swap-parameter is here because this was how I found this code and without understanding of the
-        #   in-detail implementation of fANOVA I assume there is a reason for the first element of the fanova
-        #   method marginal_mean_variance_for_values to expect the element with less elements as the first parameter
-        swap = len(grid_fanova[1]) > len(grid_fanova[0])
-
         # Populating the result
         zz = np.zeros((len(grid_fanova[0]), len(grid_fanova[1])))
         for i, x_value in enumerate(grid_fanova[0]):
             for j, y_value in enumerate(grid_fanova[1]):
-                if swap:
-                    zz[i][j] = self.fanova.marginal_mean_variance_for_values(param_indices[::-1], [y_value, x_value])[0]
-                else:
-                    zz[i][j] = self.fanova.marginal_mean_variance_for_values(param_indices, [x_value, y_value])[0]
+                zz[i][j] = self.fanova.marginal_mean_variance_for_values(param_indices, [x_value, y_value])[0]
 
         return grid_orig, zz
 
@@ -154,48 +152,19 @@ class Visualizer(object):
         add_colorbar: bool
             whether to add the colorbar for 3d plots
         """
-        if not len(param_list) == 2:
+        if len(set(param_list)) != 2:
             raise ValueError("You have to specify 2 (different) parameters")
 
         params, param_names, param_indices = self._get_parameter(param_list)
 
-        first_is_cat = isinstance(params[0], (CategoricalHyperparameter, Constant))
-        second_is_cat = isinstance(params[1], (CategoricalHyperparameter, Constant))
+        first_is_numerical = isinstance(params[0], NumericalHyperparameter)
+        second_is_numerical = isinstance(params[1], NumericalHyperparameter)
 
         plt.close()
         fig = plt.figure()
         plt.title('%s and %s' % (param_names[0], param_names[1]))
 
-        if first_is_cat or second_is_cat:
-            # At least one of the two parameters is categorical
-            if first_is_cat and second_is_cat:
-                # Both parameters are categorical -> create hotmap
-                choices, zz = self.generate_pairwise_marginal(param_indices, resolution)
-                plt.imshow(zz, cmap='hot', interpolation='nearest')
-                plt.xticks(np.arange(0, len(choices[0])), choices[0], fontsize=8)
-                plt.yticks(np.arange(0, len(choices[1])), choices[1], fontsize=8)
-                plt.xlabel(param_names[0])
-                plt.ylabel(param_names[1])
-                plt.colorbar().set_label(self._y_label)
-            else:
-                # Only one of them is categorical -> create multi-line-plot
-                # Make sure categorical is first in indices (for iteration below)
-                param_indices = param_indices if first_is_cat else param_indices[::-1]
-                params = params if first_is_cat else params[::-1]
-                choices, zz = self.generate_pairwise_marginal(param_indices, resolution)
-
-                for i, cat in enumerate(choices[0]):
-                    if params[1].log:
-                        plt.semilogx(choices[1], zz[i], label='%s' % str(cat))
-                    else:
-                        plt.plot(choices[1], zz[i], label='%s' % str(cat))
-
-                plt.ylabel(self._y_label)
-                plt.xlabel(param_names[0] if second_is_cat else param_names[1])  # x-axis displays non-categorical
-                plt.legend()
-                plt.tight_layout()
-
-        else:
+        if first_is_numerical and second_is_numerical:
             # No categoricals -> create 3D-plot
             grid_list, zz = self.generate_pairwise_marginal(param_indices, resolution)
 
@@ -223,6 +192,38 @@ class Visualizer(object):
 
                 plt.ylabel(param_names[1])
                 plt.colorbar()
+        else:
+            # At least one of the two parameters is non-numerical (categorical, ordinal or constant)
+            if first_is_numerical or second_is_numerical:
+                # Only one of them is non-numerical -> create multi-line-plot
+                # Make sure categorical is first in indices (for iteration below)
+                numerical_idx = 0 if first_is_numerical else 1
+                categorical_idx = 1 - numerical_idx
+                grid_labels, zz = self.generate_pairwise_marginal(param_indices, resolution)
+
+                if first_is_numerical:
+                    zz = zz.T
+
+                for i, cat in enumerate(grid_labels[categorical_idx]):
+                    if params[numerical_idx].log:
+                        plt.semilogx(grid_labels[numerical_idx], zz[i], label='%s' % str(cat))
+                    else:
+                        plt.plot(grid_labels[numerical_idx], zz[i], label='%s' % str(cat))
+
+                plt.ylabel(self._y_label)
+                plt.xlabel(param_names[numerical_idx])  # x-axis displays numerical
+                plt.legend()
+                plt.tight_layout()
+
+            else:
+                # Both parameters are categorical -> create hotmap
+                choices, zz = self.generate_pairwise_marginal(param_indices, resolution)
+                plt.imshow(zz, cmap='hot', interpolation='nearest')
+                plt.xticks(np.arange(0, len(choices[0])), choices[0], fontsize=8)
+                plt.yticks(np.arange(0, len(choices[1])), choices[1], fontsize=8)
+                plt.xlabel(param_names[0])
+                plt.ylabel(param_names[1])
+                plt.colorbar().set_label(self._y_label)
 
         if show:
             plt.show()
@@ -255,17 +256,7 @@ class Visualizer(object):
         """
         p, p_name, p_idx = self._get_parameter(p)
 
-        if isinstance(p, (CategoricalHyperparameter, Constant)):
-            try:
-                categorical_size = len(p.choices)
-            except AttributeError:
-                categorical_size = 1
-            marginals = [self.fanova.marginal_mean_variance_for_values([p_idx], [i]) for i in range(categorical_size)]
-            mean, v = list(zip(*marginals))
-            std = np.sqrt(v)
-            return mean, std
-
-        else:
+        if isinstance(p, NumericalHyperparameter):
             lower_bound = p.lower
             upper_bound = p.upper
             log = p.log
@@ -274,12 +265,14 @@ class Visualizer(object):
                 log_lower = np.log(lower_bound) / np.log(base)
                 log_upper = np.log(upper_bound) / np.log(base)
                 grid = np.logspace(log_lower, log_upper, resolution, endpoint=True, base=base)
-                '''
+
                 if abs(grid[0] - lower_bound) > 0.00001:
-                    raise ValueError()
+                    self.logger.warning("Check the grid's (lower) accuracy for %s (plotted vs theoretical: %s vs %s)"
+                                        % (p.name, grid[0], lower_bound))
                 if abs(grid[-1] - upper_bound) > 0.00001:
-                    raise ValueError()
-                '''
+                    self.logger.warning("Check the grid's (upper) accuracy for %s (plotted vs theoretical: %s vs %s)"
+                                        % (p.name, grid[-1], upper_bound))
+
             else:
                 grid = np.linspace(lower_bound, upper_bound, resolution)
             mean = np.zeros(resolution)
@@ -291,6 +284,20 @@ class Visualizer(object):
                 mean[i] = m
                 std[i] = np.sqrt(v)
             return mean, std, grid
+
+        else:
+            if isinstance(p, CategoricalHyperparameter):
+                categorical_size = len(p.choices)
+            elif isinstance(p, Constant):
+                categorical_size = 1
+            elif isinstance(p, OrdinalHyperparameter):
+                categorical_size = len(p.sequence)
+            else:
+                raise ValueError("Parameter %s of type %s not supported." % (p.name, type(p)))
+            marginals = [self.fanova.marginal_mean_variance_for_values([p_idx], [i]) for i in range(categorical_size)]
+            mean, v = list(zip(*marginals))
+            std = np.sqrt(v)
+            return mean, std
 
     def plot_marginal(self, param, resolution=100, log_scale=None, show=True, incumbents=None):
         """
@@ -312,40 +319,7 @@ class Visualizer(object):
         param, param_name, param_idx = self._get_parameter(param)
 
         # check if categorical
-        if isinstance(param, (CategoricalHyperparameter, Constant)):
-            # PREPROCESS
-            try:
-                labels = param.choices
-                categorical_size = len(param.choices)
-            except AttributeError:
-                labels = str(param)
-                categorical_size = 1
-            indices = np.arange(1, categorical_size + 1, 1)
-            mean, std = self.generate_marginal(param_idx)
-            min_y = mean[0]
-            max_y = mean[0]
-
-            # PLOT
-            b = plt.boxplot([[x] for x in mean])
-            plt.xticks(indices, labels)
-            # blow up boxes
-            for box, std_ in zip(b["boxes"], std):
-                y = box.get_ydata()
-                y[2:4] = y[2:4] + std_
-                y[0:2] = y[0:2] - std_
-                y[4] = y[4] - std_
-                box.set_ydata(y)
-                min_y = min(min_y, y[0] - std_)
-                max_y = max(max_y, y[2] + std_)
-
-            plt.ylim([min_y, max_y])
-
-            plt.ylabel(self._y_label)
-            plt.xlabel(param_name)
-            plt.tight_layout()
-
-        else:
-
+        if isinstance(param, NumericalHyperparameter):
             # PREPROCESS
             mean, std, grid = self.generate_marginal(param_idx, resolution)
             mean = np.asarray(mean)
@@ -380,6 +354,44 @@ class Visualizer(object):
             plt.ylabel(self._y_label)
             plt.grid(True)
             plt.legend()
+            plt.tight_layout()
+
+        else:
+            # PREPROCESS
+            if isinstance(param, CategoricalHyperparameter):
+                labels = param.choices
+                categorical_size = len(param.choices)
+            elif isinstance(param, OrdinalHyperparameter):
+                labels = param.sequence
+                categorical_size = len(param.sequence)
+            elif isinstance(param, Constant):
+                labels = str(param)
+                categorical_size = 1
+            else:
+                raise ValueError("Parameter %s of type %s not supported." % (param.name, type(param)))
+
+            indices = np.arange(1, categorical_size + 1, 1)
+            mean, std = self.generate_marginal(param_idx)
+            min_y = mean[0]
+            max_y = mean[0]
+
+            # PLOT
+            b = plt.boxplot([[x] for x in mean])
+            plt.xticks(indices, labels)
+            # blow up boxes
+            for box, std_ in zip(b["boxes"], std):
+                y = box.get_ydata()
+                y[2:4] = y[2:4] + std_
+                y[0:2] = y[0:2] - std_
+                y[4] = y[4] - std_
+                box.set_ydata(y)
+                min_y = min(min_y, y[0] - std_)
+                max_y = max(max_y, y[2] + std_)
+
+            plt.ylim([min_y, max_y])
+
+            plt.ylabel(self._y_label)
+            plt.xlabel(param_name)
             plt.tight_layout()
 
         if show:
