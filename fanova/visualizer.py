@@ -219,10 +219,10 @@ class Visualizer(object):
                 # Both parameters are categorical -> create hotmap
                 choices, zz = self.generate_pairwise_marginal(param_indices, resolution)
                 plt.imshow(zz, cmap='hot', interpolation='nearest')
-                plt.xticks(np.arange(0, len(choices[0])), choices[0], fontsize=8)
-                plt.yticks(np.arange(0, len(choices[1])), choices[1], fontsize=8)
-                plt.xlabel(param_names[0])
-                plt.ylabel(param_names[1])
+                plt.xticks(np.arange(0, len(choices[1])), choices[1], fontsize=8)
+                plt.yticks(np.arange(0, len(choices[0])), choices[0], fontsize=8)
+                plt.xlabel(param_names[1])
+                plt.ylabel(param_names[0])
                 plt.colorbar().set_label(self._y_label)
 
         if show:
