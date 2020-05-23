@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from collections import OrderedDict
 import itertools as it
 import logging
@@ -21,7 +22,7 @@ class fANOVA(object):
         
         Parameters
         ------------
-        X: matrix with the features (numerically encoded)
+        X: matrix with the features, either a np.array or a pd.DataFrame (numerically encoded)
         
         Y: vector with the response values (numerically encoded)
         
@@ -55,6 +56,23 @@ class fANOVA(object):
         self.logger = logging.getLogger(self.__module__ + '.' + self.__class__.__name__)
 
         pcs = [(np.nan, np.nan)]*X.shape[1]
+
+        # Convert pd.DataFrame to np.array
+        if isinstance(X, pd.DataFrame):
+            self.logger.debug("Detected pandas dataframes, converting to floats...")
+            if config_space is not None:
+                # Check if column names match parameter names
+                bad_input = set(X.columns) - set(config_space.get_hyperparameter_names())
+                if len(bad_input) != 0:
+                    raise ValueError("Could not identify parameters %s from pandas dataframes" % str(bad_input))
+                # Reorder dataframe if necessary
+                X = X[config_space.get_hyperparameter_names()]
+            X = X.to_numpy()
+        elif config_space is not None:
+            # There is a config_space but no way to check if the np.array'ed data in X is in the correct order...
+            self.logger.warning("Note that fANOVA expects data to be ordered like the return of ConfigSpace's "
+                                "'get_hyperparameters'-method. We recommend to use labeled pandas dataframes to "
+                                "avoid any problems.")
 
         # if no ConfigSpace is specified, let's build one with all continuous variables
         if (config_space is None):
