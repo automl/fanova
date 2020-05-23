@@ -5,7 +5,8 @@ import logging
 import pyrfr.regression as reg
 import pyrfr.util
 import ConfigSpace
-from ConfigSpace.hyperparameters import CategoricalHyperparameter, UniformFloatHyperparameter, NumericalHyperparameter, UnParametrizedHyperparameter, Constant
+from ConfigSpace.hyperparameters import CategoricalHyperparameter, UniformFloatHyperparameter, NumericalHyperparameter, \
+    UnParametrizedHyperparameter, Constant, OrdinalHyperparameter
 
 
 class fANOVA(object):
@@ -83,6 +84,11 @@ class fANOVA(object):
                 unique_vals = set(X[:, i])
                 if len(unique_vals) > len(self.cs_params[i].choices):
                     raise RuntimeError('There are some categoricals missing in the ConfigSpace specification for hyperparameter %s:' % self.cs_params[i].name)
+            elif isinstance(self.cs_params[i], OrdinalHyperparameter):
+                 unique_vals = set(X[:, i])
+                 if len(unique_vals) > len(self.cs_params[i].sequence):
+                      raise RuntimeError("There are some sequence-options missing in the ConfigSpace specification for "
+                                         "hyperparameter %s:" % self.cs_params[i].name)
             elif isinstance(self.cs_params[i], (Constant)):
                 # oddly, unparameterizedhyperparameter and constant are not supported. 
                 # raise TypeError('Unsupported Hyperparameter: %s' % type(self.cs_params[i]))
@@ -106,6 +112,9 @@ class fANOVA(object):
             if isinstance(hp, CategoricalHyperparameter):
                 types[i] = len(hp.choices)
                 pcs[i] = (len(hp.choices), np.nan)
+            elif isinstance(hp, OrdinalHyperparameter):
+                types[i] = len(hp.sequence)
+                pcs[i] = (len(hp.sequence), np.nan)
             elif isinstance(self.cs_params[i], NumericalHyperparameter):
                 pcs[i] = (hp.lower, hp.upper)
             elif isinstance(self.cs_params[i], (Constant)):
