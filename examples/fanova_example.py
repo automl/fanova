@@ -37,7 +37,7 @@ print(best_margs)
 
 # visualizations:
 # first create an instance of the visualizer with fanova object and configspace
-vis = fanova.visualizer.Visualizer(f, cs)
+vis = fanova.visualizer.Visualizer(f, cs, 'example_output')
 # creating the plot of pairwise marginal:
 vis.plot_pairwise_marginal((0,2), resolution=20)
 # creating all plots in the directory
