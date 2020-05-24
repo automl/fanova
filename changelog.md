@@ -1,3 +1,9 @@
+# 2.0.18.dev
+
+## Minor Changes
+
+* Allow for input as pandas Dataframe, add pandas requirement, based on #95
+
 # 2.0.17
 
 ## Bug fixes
