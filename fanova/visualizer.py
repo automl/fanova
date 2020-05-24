@@ -4,12 +4,12 @@ import os
 import pickle
 import re
 
-import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
-from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 from ConfigSpace.hyperparameters import Hyperparameter, CategoricalHyperparameter, Constant, OrdinalHyperparameter, \
     NumericalHyperparameter
+from matplotlib import cm
+from mpl_toolkits.mplot3d import Axes3D
 
 
 class Visualizer(object):
@@ -235,7 +235,7 @@ class Visualizer(object):
             try:
                 pickle.dump(fig, open(interact_dir + '/%s_%s.fig.pkl' % (param_names[0], param_names[1]), 'wb'))
             except AttributeError as err:
-                self.logger.debug(err, exc_info=1)
+                self.logger.debug(err, exc_info=True)
                 self.logger.info("Pickling the interactive pairwise-marginal plot (%s) raised an exception. Resume "
                                  "without pickling. ", str(param_names))
 
