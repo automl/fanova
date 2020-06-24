@@ -165,7 +165,7 @@ class Visualizer(object):
         plt.title('%s and %s' % (param_names[0], param_names[1]))
 
         if first_is_numerical and second_is_numerical:
-            # No categoricals -> create 3D-plot
+            # No categoricals -> create heatmap / 3D-plot
             grid_list, zz = self.generate_pairwise_marginal(param_indices, resolution)
 
             z_min, z_max = zz.min(), zz.max()
@@ -173,7 +173,7 @@ class Visualizer(object):
 
             if three_d:
                 ax = Axes3D(fig)
-                surface = ax.plot_surface(display_xx, display_yy, zz,
+                surface = ax.plot_surface(display_xx, display_yy, zz.T,
                                           rstride=1, cstride=1, cmap=colormap, linewidth=0, antialiased=False)
                 ax.set_xlabel(param_names[0])
                 ax.set_ylabel(param_names[1])
@@ -182,7 +182,7 @@ class Visualizer(object):
                     fig.colorbar(surface, shrink=0.5, aspect=5)
 
             else:
-                plt.pcolor(display_xx, display_yy, zz, cmap=colormap, vmin=z_min, vmax=z_max)
+                plt.pcolor(display_xx, display_yy, zz.T, cmap=colormap, vmin=z_min, vmax=z_max)
                 plt.xlabel(param_names[0])
 
                 if self.cs_params[param_indices[0]].log:
@@ -218,11 +218,11 @@ class Visualizer(object):
             else:
                 # Both parameters are categorical -> create hotmap
                 choices, zz = self.generate_pairwise_marginal(param_indices, resolution)
-                plt.imshow(zz, cmap='hot', interpolation='nearest')
-                plt.xticks(np.arange(0, len(choices[1])), choices[1], fontsize=8)
-                plt.yticks(np.arange(0, len(choices[0])), choices[0], fontsize=8)
-                plt.xlabel(param_names[1])
-                plt.ylabel(param_names[0])
+                plt.imshow(zz.T, cmap='hot', interpolation='nearest')
+                plt.xticks(np.arange(0, len(choices[0])), choices[0], fontsize=8)
+                plt.yticks(np.arange(0, len(choices[1])), choices[1], fontsize=8)
+                plt.xlabel(param_names[0])
+                plt.ylabel(param_names[1])
                 plt.colorbar().set_label(self._y_label)
 
         if show:
