@@ -11,6 +11,8 @@ We can then import fANOVA and start it by typing
 
     >>> from fanova import fANOVA
     >>> import csv
+    >>> import os
+    >>> import numpy as np
     >>> path = os.path.dirname(os.path.realpath(__file__))
     >>> X = np.loadtxt(path + '/example_data/online_lda/online_lda_features.csv', delimiter=",")
     >>> Y = np.loadtxt(path + '/example_data/online_lda/online_lda_responses.csv', delimiter=",")
