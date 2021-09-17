@@ -23,12 +23,18 @@ This creates a new fANOVA object and fits the Random Forest on the specified dat
 To compute now the marginal of the first parameter type:
 
     >>> f.quantify_importance((0, ))
-        0.075414122571199116
+        {(0,): {'individual importance': 0.07567390839783641,
+        'total importance': 0.07567390839783641,
+        'individual std': 0.020053764191788233,
+        'total std': 0.020053764191788233}}
 
 fANOVA also allows to specify parameters by their names.
 
-    >>> f.quantify_importance(("Col0", ))
-    	0.075414122571199116
+    >>> f.quantify_importance(("x_000", ))
+        {('x_000',): {'individual importance': 0.07567390839783641,
+        'total importance': 0.07567390839783641,
+        'individual std': 0.020053764191788233,
+        'total std': 0.020053764191788233}}
 
 
 Advanced
