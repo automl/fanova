@@ -56,9 +56,9 @@ You can also specify the number of trees in the random forest as well as the min
 More functions
 --------------
 
-    * **f.get_most_important_pairwise_marginals(n)**
+    * **f.get_most_important_pairwise_marginals(n=N)**
 
-    Returns the **n** most important pairwise marginals
+    Returns the **N** most important pairwise marginals
 
     * **f.get_most_important_pairwise_marginals(params)**
 
