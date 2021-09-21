@@ -128,7 +128,6 @@ You will also find an extra directory in your specified plot directory called 'i
 How to load a CSV-file
 --------------------------
 
-import numpy as np
-
-data = np.loadtxt('your_file.csv', delimiter=",")
+>>> import numpy as np
+>>> data = np.loadtxt('your_file.csv', delimiter=",")
 
