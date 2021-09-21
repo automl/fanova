@@ -99,7 +99,7 @@ The same can been done for pairwise marginals
 
     >>> vis.plot_pairwise_marginal([0,1])
 
-.. image:: ../examples/example_data/online_lda/figure2.png
+.. image:: ../examples/example_data/online_lda/pairwise.png
 
 
 If you are just interested in the N most important pairwise marginals you can plot them through:
