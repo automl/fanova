@@ -6,7 +6,7 @@ Manual
 
 Quick Start
 -----------
-To run the examples, just download the `data <https://github.com/automl/fanova/blob/master/fanova/example/online_lda.tar.gz>`_ and start the python console.
+To run the examples, download the data from the `github repository <https://github.com/automl/fanova/tree/master/examples/example_data/online_lda>`_ and start the python console.
 We can then import fANOVA and start it by typing
 
     >>> from fanova import fANOVA
@@ -129,5 +129,12 @@ How to load a CSV-file
 --------------------------
 
     >>> import numpy as np
-    >>> data = np.loadtxt('your_file.csv', delimiter=",")
+    >>> X = np.loadtxt('your_file.csv', delimiter=",")
 
+Alternatively, pandas may be used:
+
+    >>> import pandas as pd
+    >>> df = pd.read_csv('your_file.csv')
+    >>> X = df[your_param_columns]
+    >>> Y = df[your_score_column]
+    >>> f = fANOVA(X, Y, config_space=cs)
