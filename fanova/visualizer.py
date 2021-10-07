@@ -310,7 +310,7 @@ class Visualizer(object):
         resolution: int
             Number of samples to generate from the parameter range as values to predict
         log_scale: boolean
-            If log scale is required or not. If no value is given, it is deduced from the ConfigSpace provided
+            Whether to plot using log scale or not. If no value is given, it is deduced from the ConfigSpace provided and from values.
         show: boolean
             whether to call plt.show() to show plot directly as interactive matplotlib-plot
         incumbents: List[Configuration]
@@ -325,12 +325,15 @@ class Visualizer(object):
         """
         param, param_name, param_idx = self._get_parameter(param)
 
-        # get figure Axes to plot on (or make an empty one)
+        # get figure AxesSubplot to plot on (or make a new one)
         if (ax is None):
             # create empty figure to work with
-            fig, ax = plt.subplots(1, 1)
+            fig, ax = plt.subplots(1)
         else:
             fig = ax.get_figure()
+
+            # don't show the figure when user has provided their own figure AxesSubplot
+            show = False
 
         # check if categorical
         if isinstance(param, NumericalHyperparameter):
@@ -342,13 +345,19 @@ class Visualizer(object):
             lower_curve = mean - std
             upper_curve = mean + std
 
+
+            # auto-detect whether to do log-scale
             if log_scale is None:
-                log_scale = param.log or (np.diff(grid).std() > 0.000001)
+                # take log value from ConfigSpace
+                log_scale = param.log
+
+                # auto-detect if log-scale might be better
+                if not log_scale and (np.diff(grid).std() > 0.000001):
+                    self.logger.info("Plotting this parameter, %s, in log-scale because auto-detected that it might be better." % param_name)
+                    log_scale = True
 
             # PLOT
             if log_scale:
-                if np.diff(grid).std() > 0.000001:
-                    self.logger.info("It might be better to plot this parameter '%s' in log-scale.", param_name)
                 ax.semilogx(grid, mean, 'b', label='predicted %s' % self._y_label)
             else:
                 ax.plot(grid, mean, 'b', label='predicted %s' % self._y_label)
