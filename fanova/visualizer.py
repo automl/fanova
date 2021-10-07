@@ -299,7 +299,7 @@ class Visualizer(object):
             std = np.sqrt(v)
             return mean, std
 
-    def plot_marginal(self, param, resolution=100, log_scale=None, show=True, incumbents=None):
+    def plot_marginal(self, param, resolution=100, log_scale=None, show=True, incumbents=None, ax=None):
         """
         Creates a plot of marginal of a selected parameter
 
@@ -315,8 +315,22 @@ class Visualizer(object):
             whether to call plt.show() to show plot directly as interactive matplotlib-plot
         incumbents: List[Configuration]
             list of ConfigSpace.Configurations that are marked as incumbents
+        ax: AxesSubplot, optional
+            A matplotlib AxesSubplot in which to place the plot or, if None, a new figure will be created.
+
+        Returns
+        -------
+        ax: AxesSubplot
+            A matplotlib AxesSubplot containing the plot. To save it to disk use `ax.get_figure().savefig('filename.png')`.
         """
         param, param_name, param_idx = self._get_parameter(param)
+
+        # get figure Axes to plot on (or make an empty one)
+        if (ax is None):
+            # create empty figure to work with
+            fig, ax = plt.subplots(1, 1)
+        else:
+            fig = ax.get_figure()
 
         # check if categorical
         if isinstance(param, NumericalHyperparameter):
@@ -335,10 +349,10 @@ class Visualizer(object):
             if log_scale:
                 if np.diff(grid).std() > 0.000001:
                     self.logger.info("It might be better to plot this parameter '%s' in log-scale.", param_name)
-                plt.semilogx(grid, mean, 'b', label='predicted %s' % self._y_label)
+                ax.semilogx(grid, mean, 'b', label='predicted %s' % self._y_label)
             else:
-                plt.plot(grid, mean, 'b', label='predicted %s' % self._y_label)
-            plt.fill_between(grid, upper_curve, lower_curve, facecolor='red', alpha=0.6, label='std')
+                ax.plot(grid, mean, 'b', label='predicted %s' % self._y_label)
+            ax.fill_between(grid, upper_curve, lower_curve, facecolor='red', alpha=0.6, label='std')
 
             if incumbents is not None:
                 if not isinstance(incumbents, list):
@@ -346,15 +360,15 @@ class Visualizer(object):
                 values = [inc[param_name] for inc in incumbents if param_name in inc and inc[param_name] is not None]
                 indices = [(np.abs(np.asarray(grid) - val)).argmin() for val in values]
                 if len(indices) > 0:
-                    plt.scatter(list([grid[idx] for idx in indices]),
+                    ax.scatter(list([grid[idx] for idx in indices]),
                                 list([mean[idx] for idx in indices]),
                                 label='incumbent', c='black', marker='.', zorder=999)
 
-            plt.xlabel(param_name)
-            plt.ylabel(self._y_label)
-            plt.grid(True)
-            plt.legend()
-            plt.tight_layout()
+            ax.set_xlabel(param_name)
+            ax.set_ylabel(self._y_label)
+            ax.grid(True)
+            ax.legend()
+            fig.tight_layout()
 
         else:
             # PREPROCESS
@@ -376,8 +390,8 @@ class Visualizer(object):
             max_y = mean[0]
 
             # PLOT
-            b = plt.boxplot([[x] for x in mean])
-            plt.xticks(indices, labels)
+            b = ax.boxplot([[x] for x in mean])
+            ax.set_xticks(indices, labels)
             # blow up boxes
             for box, std_ in zip(b["boxes"], std):
                 y = box.get_ydata()
@@ -388,16 +402,17 @@ class Visualizer(object):
                 min_y = min(min_y, y[0] - std_)
                 max_y = max(max_y, y[2] + std_)
 
-            plt.ylim([min_y, max_y])
+            ax.set_ylim([min_y, max_y])
 
-            plt.ylabel(self._y_label)
-            plt.xlabel(param_name)
-            plt.tight_layout()
+            ax.set_ylabel(self._y_label)
+            ax.set_xlabel(param_name)
+            fig.tight_layout()
 
         if show:
             plt.show()
-        else:
-            return plt
+        
+        # Always return the matplotlib plot (to allow users to save it etc)
+        return ax
 
     def create_most_important_pairwise_marginal_plots(self, params=None, n=20, three_d=True, resolution=20):
         """
