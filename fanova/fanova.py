@@ -117,9 +117,9 @@ class fANOVA(object):
             else:
                 raise TypeError('Unsupported Hyperparameter: %s' % type(self.cs_params[i]))
 
-        if not np.issubdtype(X.dtype, np.float64):
+        if not np.issubdtype(X.dtype, float):
             logging.warning('low level library expects X argument to be float')
-        if not np.issubdtype(Y.dtype, np.float64):
+        if not np.issubdtype(Y.dtype, float):
             logging.warning('low level library expects Y argument to be float')
 
         # initialize all types as 0
@@ -283,7 +283,7 @@ class fANOVA(object):
             prod_midpoints = it.product(*midpoints)
             prod_sizes = it.product(*sizes)
 
-            sample = np.full(self.n_dims, np.nan, dtype=np.float)
+            sample = np.full(self.n_dims, np.nan, dtype=float)
 
             # make prediction for all midpoints and weigh them by the corresponding size
             for i, (m, s) in enumerate(zip(prod_midpoints, prod_sizes)):
@@ -375,7 +375,7 @@ class fANOVA(object):
         tuple 
             marginal mean prediction and corresponding variance estimate
         """
-        sample = np.full(self.n_dims, np.nan, dtype=np.float)
+        sample = np.full(self.n_dims, np.nan, dtype=float)
         for i in range(len(dimlist)):
             sample[dimlist[i]] = values_to_predict[i]
 
