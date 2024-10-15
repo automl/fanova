@@ -283,7 +283,7 @@ class fANOVA(object):
             prod_midpoints = it.product(*midpoints)
             prod_sizes = it.product(*sizes)
 
-            sample = np.full(self.n_dims, np.nan, dtype=np.float)
+            sample = np.full(self.n_dims, np.nan, dtype=float)
 
             # make prediction for all midpoints and weigh them by the corresponding size
             for i, (m, s) in enumerate(zip(prod_midpoints, prod_sizes)):
