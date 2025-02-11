@@ -6,11 +6,13 @@ Manual
 
 Quick Start
 -----------
-To run the examples, just download the `data <https://github.com/automl/fanova/blob/master/fanova/example/online_lda.tar.gz>`_ and start the python console.
+To run the examples, download the data from the `github repository <https://github.com/automl/fanova/tree/master/examples/example_data/online_lda>`_ and start the python console.
 We can then import fANOVA and start it by typing
 
     >>> from fanova import fANOVA
     >>> import csv
+    >>> import os
+    >>> import numpy as np
     >>> path = os.path.dirname(os.path.realpath(__file__))
     >>> X = np.loadtxt(path + '/example_data/online_lda/online_lda_features.csv', delimiter=",")
     >>> Y = np.loadtxt(path + '/example_data/online_lda/online_lda_responses.csv', delimiter=",")
@@ -21,12 +23,18 @@ This creates a new fANOVA object and fits the Random Forest on the specified dat
 To compute now the marginal of the first parameter type:
 
     >>> f.quantify_importance((0, ))
-        0.075414122571199116
+        {(0,): {'individual importance': 0.07567390839783641,
+        'total importance': 0.07567390839783641,
+        'individual std': 0.020053764191788233,
+        'total std': 0.020053764191788233}}
 
 fANOVA also allows to specify parameters by their names.
 
-    >>> f.quantify_importance(("Col0", ))
-    	0.075414122571199116
+    >>> f.quantify_importance(("x_000", ))
+        {('x_000',): {'individual importance': 0.07567390839783641,
+        'total importance': 0.07567390839783641,
+        'individual std': 0.020053764191788233,
+        'total std': 0.020053764191788233}}
 
 
 Advanced
@@ -48,9 +56,9 @@ You can also specify the number of trees in the random forest as well as the min
 More functions
 --------------
 
-    * **f.get_most_important_pairwise_marginals(n)**
+    * **f.get_most_important_pairwise_marginals(n=N)**
 
-    Returns the **n** most important pairwise marginals
+    Returns the **N** most important pairwise marginals
 
     * **f.get_most_important_pairwise_marginals(params)**
 
@@ -91,7 +99,7 @@ The same can been done for pairwise marginals
 
     >>> vis.plot_pairwise_marginal([0,1])
 
-.. image:: ../examples/example_data/online_lda/figure2.png
+.. image:: ../examples/example_data/online_lda/pairwise.png
 
 
 If you are just interested in the N most important pairwise marginals you can plot them through:
@@ -120,7 +128,13 @@ You will also find an extra directory in your specified plot directory called 'i
 How to load a CSV-file
 --------------------------
 
-import numpy as np
+    >>> import numpy as np
+    >>> X = np.loadtxt('your_file.csv', delimiter=",")
 
-data = np.loadtxt('your_file.csv', delimiter=",")
+Alternatively, pandas may be used:
 
+    >>> import pandas as pd
+    >>> df = pd.read_csv('your_file.csv')
+    >>> X = df[your_param_columns]
+    >>> Y = df[your_score_column]
+    >>> f = fANOVA(X, Y, config_space=cs)
